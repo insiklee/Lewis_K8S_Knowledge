@@ -572,6 +572,76 @@ Non-terminated Pods:          (2 in total)
   **kube-system                 calico-node-sqbl2**    250m (6%)     0 (0%)      0 (0%)           0 (0%)         3d23h
   **kube-system                 kube-proxy-fzqph**     0 (0%)        0 (0%)      0 (0%)           0 (0%)         3d23h
 ```
+## 03. Drain
+
+drain은 배수하다란 뜻이다. 하수구에 물 빠지듯이 특정 노드에서 실행중인 모든 pod를 다른 node로 옮기겠다는 뜻이다.
+
+**단,** **deployment나 daemonset 등으로 관리되지 않는 독립적인 Pod들은 그대로 삭제되니 주의해야 한다.**
+
+### 01. Drain 사용
+
+<aside>
+💡 **# kubectl drain {노드명}**
+
+</aside>
+
+위의 명령어는 기본형이다. 만약 drain을 시도하는 노드에서 개별 pod나 daemonset, emptydir을 사용하는 Pod가 있다면 에러가 발생하면서 drain이 되지 않는다.
+
+```json
+**# kubectl drain k8s-worker1**
+node/k8s-worker1 cordoned
+error: unable to drain node "k8s-worker1" due to error:[cannot delete Pods with local storage (use --delete-emptydir-data to override): default/emptdir-sidecar-pod, cannot delete Pods declare no controller (use --force to override): echo/nginx, echo/nginx-80, my-app/curly, my-app/test-ingress, my-app/wget, cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/calico-node-sqbl2, kube-system/kube-proxy-fzqph], continuing command...
+There are pending nodes to be drained:
+ k8s-worker1
+**cannot delete Pods with local storage (use --delete-emptydir-data to override): default/emptdir-sidecar-pod   <- emptDir 사용때문에 삭제 불가**
+**cannot delete Pods declare no controller (use --force to override): echo/nginx, echo/nginx-80, my-app/curly, my-app/test-ingress, my-app/wget <- 단일 Pod 때문에 삭제 불가**
+**cannot delete DaemonSet-managed Pods (use --ignore-daemonsets to ignore): kube-system/calico-node-sqbl2, kube-system/kube-proxy-fzqph <- DaemonSet 때문에 삭제 불가**
+```
+
+따라서 아래와 같이 일부 옵션을 추가해서 진행해야한다.
+
+<aside>
+💡 **# kubectl drain {노드명} --ignore-daemonsets --delete-emptydir-data --force**
+
+</aside>
+
+- --ignore-daemonsets : 데몬셋으로 실행된 Pod를 무시한다.
+- --delete-emptydir-data : emptyDir로 선언된 볼륨의 데이터를 삭제한다.
+- --force : 단일 Pod를 삭제한다.
+
+```json
+**# kubectl drain k8s-worker1 --ignore-daemonsets --delete-emptydir-data --force** 
+**node/k8s-worker1 already cordoned <- 해당 노드를 cordon 처리**
+**WARNING: deleting Pods that declare no controller: default/emptdir-sidecar-pod, echo/nginx, echo/nginx-80, my-app/curly, my-app/test-ingress, my-app/wget; ignoring DaemonSet-managed Pods: kube-system/calico-node-sqbl2, kube-system/kube-proxy-fzqph <- 단일 Pod는 삭제되지만 DaemonSet Pod는 무시된다는 메시지**
+evicting pod my-app/wget
+evicting pod default/emptdir-sidecar-pod
+evicting pod default/taint-toleration-test-688dd8b89-m9xlw
+evicting pod default/taint-toleration-test-688dd8b89-xf5lx
+evicting pod echo/nginx-80
+evicting pod echo/nginx
+evicting pod my-app/curly
+evicting pod my-app/test-ingress
+evicting pod default/taint-toleration-test-688dd8b89-b6kcg
+pod/curly evicted
+pod/taint-toleration-test-688dd8b89-xf5lx evicted
+pod/emptdir-sidecar-pod evicted
+pod/taint-toleration-test-688dd8b89-m9xlw evicted
+pod/nginx-80 evicted
+pod/taint-toleration-test-688dd8b89-b6kcg evicted
+pod/nginx evicted
+pod/test-ingress evicted
+pod/wget evicted
+node/k8s-worker1 drained
+
+**# kubectl describe node k8s-worker1
+(전략)
+## DaemonSet이 관리하는 Pod만 실행중**
+Non-terminated Pods:          (2 in total)
+  Namespace                   Name                 CPU Requests  CPU Limits  Memory Requests  Memory Limits  Age
+  ---------                   ----                 ------------  ----------  ---------------  -------------  ---
+  **kube-system                 calico-node-sqbl2**    250m (6%)     0 (0%)      0 (0%)           0 (0%)         3d23h
+  **kube-system                 kube-proxy-fzqph**     0 (0%)        0 (0%)      0 (0%)           0 (0%)         3d23h
+```
 
 ### 02. Drain 종료
 
@@ -579,6 +649,9 @@ Drain은 우선 Node를 Cordon 설정한 뒤 모든 Pod들을 옮기는 명령�
 
 <aside>
 💡 **# kubectl uncordon {노드명}**
+
+</aside>
+
 ```json
 # **kubectl get nodes**
 NAME          STATUS                     ROLES           AGE     VERSION
@@ -595,4 +668,3 @@ k8s-master    Ready    control-plane   3d22h   v1.24.1
 k8s-worker1   Ready    <none>          3d22h   v1.24.1
 k8s-worker2   Ready    <none>          3d22h   v1.24.1
 ```
-</aside>
