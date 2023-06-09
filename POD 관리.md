@@ -362,3 +362,6 @@ pod "multicontainer-prac" force deleted
 ```
 
 - **03. Running 제외 파드 삭제**
+```yaml
+kubectl get pods --all-namespaces | grep -E OutOfcpu\|Evicted\|OOMKilled\|Error\|ContainerStatusUnknown | awk '{print "kubectl delete po " $2 " -n " $1 }' | bash
+```
