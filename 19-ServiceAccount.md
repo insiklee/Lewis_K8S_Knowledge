@@ -8,7 +8,7 @@ kubectl로 쿠버네티스 클러스터에 접근하는 사람들은 대부분 a
 
 ## 02. ServiceAccount의 목적
 
-ServiceAccount는 클러스터의 Role 리소스나 ClusterRole 리소스와 결합하여 사용한다. Role과 ClusterRole에 대한 설명은 [K8s RBAC - Role, ClusterRole 관리](https://www.notion.so/K8s-RBAC-Role-ClusterRole-398fcf1f53d748d99a1f3f622975cb8c?pvs=21) 에서 확인 가능하다.
+ServiceAccount는 클러스터의 Role 리소스나 ClusterRole 리소스와 결합하여 사용한다. Role과 ClusterRole에 대한 설명은 [K8s RBAC - Role, ClusterRole 관리](https://github.com/insiklee/Lewis_K8S_Knowledge/blob/master/24-Role%2CClusterRole.md) 에서 확인 가능하다.
 
 ELK같이 모든 파드의 로그정보를 수집하는 어플리케이션의 경우 다른 파드의 상태를 가져올 수 있는 권한이 필요하다. Metric Server의 경우에도 각 파드의 자원 사용량을 계산하기 위한 접근 권한이 필요하다. 또 CoreDNS는 서비스와 파드의 DNS 주소를 생성하기 위해서 endpoint, service, pod, namespace 등의 정보를 읽을 수 있는 권한이 필요하다.
 
